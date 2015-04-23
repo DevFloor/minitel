@@ -4,6 +4,16 @@ resurrection de notre antique minitel
 
 ![minitel](./minitel.jpg)
 
+##Actions
+- [ ] Ouvrir le minitel, verifier l'état des composants avant allumage,
+- [*] Verifier que le minitel est bistandard. Prise DIN + touche Fnct.
+- [ ] Alimentation éléctrique, souder le fil,
+- [ ] Test allumage,
+- [ ] Acheter la liste des composants éléctronique pour l'adaptateur série/minitel,
+- [ ] Souder la carte adaptatrice,
+- [ ] Raspberry Pi, carte SD, OS
+- [ ] Config de la console Serie Linux sur le Minitel
+
 
 ## Links
 

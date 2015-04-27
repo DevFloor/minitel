@@ -9,10 +9,10 @@ resurrection de notre antique minitel
 - [x] Verifier que le minitel est bistandard. Prise DIN + touche Fnct.
 - [x] Alimentation éléctrique, souder le fil,
 - [x] Test allumage,
-- [ ] Acheter la liste des composants éléctronique pour l'adaptateur série/minitel,
-- [ ] Souder la carte adaptatrice,
-- [ ] Raspberry Pi, carte SD, OS
-- [ ] Config de la console Serie Linux sur le Minitel
+- [x] Acheter la liste des composants éléctronique pour l'adaptateur série/minitel,
+- [x] Souder la carte adaptatrice,
+- [x] Raspberry Pi, carte SD, OS
+- [x] Config de la console Serie Linux sur le Minitel
 
 
 ## Links

@@ -10,3 +10,6 @@ basé sur : http://x0r.fr/blog/5
 - [x] du câble en longueur suffisante, avec au moins 5 contacts (on peut évidemment récupérer le câble et le connecteur DB-9 en un coup en achetant un câble série et en coupant un des connecteurs) ;
 - [x] un connecteur DIN-5 45° mâle.
 - [x] adaptateur USB-RS232
+
+# Adaptateur tout fait 
+- https://hackspark.fr/fr/3-3v-5v-logic-level-converter.html

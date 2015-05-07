@@ -14,6 +14,8 @@ resurrection de notre antique minitel
 - [x] Raspberry Pi, carte SD, OS
 - [x] Config de la console Serie Linux sur le Minitel
 
+## Notes
+ - ssh pi@192.168.103.146 -p devfloor
 
 ## Links
 

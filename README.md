@@ -17,7 +17,7 @@ resurrection de notre antique minitel
 ## Notes
  - ssh pi@192.168.103.146 -p devfloor
 
-## Links
+## Hardware Links
 
  - http://wiki.labomedia.org/index.php/Renaissance_d%27un_Minitel_avec_une_Raspberry_Pi
  - http://x0r.fr/blog/5
@@ -25,3 +25,9 @@ resurrection de notre antique minitel
  - http://caca.zoy.org/wiki/libcaca
  - https://github.com/bevacqua/hit-that
  - https://www.raspberrypi.org/forums/viewtopic.php?f=41&t=44932
+
+## Software links
+
+ - https://www.npmjs.com/package/blessed
+ - https://www.npmjs.com/package/ncurses
+ - https://www.npmjs.com/package/curses

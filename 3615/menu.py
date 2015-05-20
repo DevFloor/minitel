@@ -9,7 +9,7 @@ import curses, os #curses is the interface for capturing key presses on the menu
 screen = curses.initscr() #initializes a new window for capturing key presses
 curses.noecho() # Disables automatic echoing of key presses (prevents program from input each key twice)
 curses.cbreak() # Disables line buffering (runs each key as it is pressed rather than waiting for the return key to pressed)
-#curses.start_color() # Lets you use colors when highlighting selected menu option
+curses.start_color() # Lets you use colors when highlighting selected menu option
 screen.keypad(1) # Capture input from keypad
 
 # Change this to use different colors when highlighting
@@ -30,7 +30,7 @@ menu_data = {
           { 'title': "Nom", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/games/SSR/SSR.EXE -exit' },
           { 'title': "Email", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/games/SSO/SSO.EXE -exit' },
           { 'title': "Message", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/games/SST/SST.EXE -exit' },
-          { 'title': "Envoyer sur le serveur telematique", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/games/SST/SST.EXE -exit' },
+          { 'title': "Envoyer sur le serveur telematique de Numa", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/games/SST/SST.EXE -exit' },
         ]
     },
     { 'title': "L'histoire du DevFloor", 
@@ -67,17 +67,19 @@ def runmenu(menu, parent):
       screen.addstr(2,2, menu['title'], curses.A_STANDOUT) # Title for this menu
       screen.addstr(4,2, menu['subtitle'], curses.A_BOLD) #Subtitle for this menu
 
+      firstmenuline = 8
+
       # Display all the menu items, showing the 'pos' item highlighted
       for index in range(optioncount):
         textstyle = n
         if pos==index:
           textstyle = h
-        screen.addstr(5+index,4, "%d - %s" % (index+1, menu['options'][index]['title']), textstyle)
+        screen.addstr(firstmenuline+index,4, "%d - %s" % (index+1, menu['options'][index]['title']), textstyle)
       # Now display Exit/Return at bottom of menu
       textstyle = n
       if pos==optioncount:
         textstyle = h
-      screen.addstr(5+optioncount,4, "%d - %s" % (optioncount+1, lastoption), textstyle)
+      screen.addstr(firstmenuline+optioncount,4, "%d - %s" % (optioncount+1, lastoption), textstyle)
       screen.refresh()
       # finished updating screen
 

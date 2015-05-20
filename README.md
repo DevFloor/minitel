@@ -31,7 +31,7 @@ resurrection de notre antique minitel
  - https://www.npmjs.com/package/blessed
  - https://www.npmjs.com/package/ncurses
  - https://www.npmjs.com/package/curses
- - 
+ - http://www.ibm.com/developerworks/library/l-python6/
  
 ## History
  - http://www.minitel.org

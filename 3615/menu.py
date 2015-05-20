@@ -6,7 +6,7 @@
 
 from time import sleep
 import curses, os #curses is the interface for capturing key presses on the menu, os launches the files
-screen = curses.initscr() #initializes a new window for capturing key presses
+screen = curses.initscr() #initializes a new window for capturing key presse
 curses.noecho() # Disables automatic echoing of key presses (prevents program from input each key twice)
 curses.cbreak() # Disables line buffering (runs each key as it is pressed rather than waiting for the return key to pressed)
 curses.start_color() # Lets you use colors when highlighting selected menu option
@@ -19,18 +19,20 @@ n = curses.A_NORMAL #n is the coloring for a non highlighted menu option
 
 MENU = "menu"
 COMMAND = "command"
+FORM = "form"
+SERVTELEMATIQUE = "Envoyer sur le serveur telematique de Numa"
 EXITMENU = "exitmenu"
 
 menu_data = {
-  'title': "Livre d'Or du DevFloor", 'type': MENU, 'subtitle': "Tapez le chiffre + Entrer",
+  'title': "Livre d'Or de l apero DevFloor", 'type': MENU, 'subtitle': "Tapez le chiffre + Entree",
   'options':[
    
-    { 'title': "Laisser un message", 'type': MENU, 'subtitle': "Tapez le chiffre + Entrer",
+    { 'title': "Laisser un message", 'type': MENU, 'subtitle': "Tapez le chiffre + Entree",
         'options': [
-          { 'title': "Nom", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/games/SSR/SSR.EXE -exit' },
-          { 'title': "Email", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/games/SSO/SSO.EXE -exit' },
-          { 'title': "Message", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/games/SST/SST.EXE -exit' },
-          { 'title': "Envoyer sur le serveur telematique de Numa", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/games/SST/SST.EXE -exit' },
+          { 'title': "Nom", 'type': FORM },
+          { 'title': "Email", 'type': FORM },
+          { 'title': "Message", 'type': FORM},
+          { 'title': SERVTELEMATIQUE, 'type': FORM },
         ]
     },
     { 'title': "L'histoire du DevFloor", 
@@ -42,7 +44,24 @@ menu_data = {
   ]
 }
 
+def leavemessage(field):
 
+  if field == SERVTELEMATIQUE:
+    with open("livredor.txt", "a") as f:
+      f.write('{separator}'.format(separator="##############\n"))
+    return
+
+  screen.addstr(8,2, "Entrez votre " + field)
+  screen.refresh()  
+  curses.echo()
+  userinput = screen.getstr(9, 2)
+  userinput = userinput + '\n'
+  curses.noecho()
+
+  with open("livredor.txt", "a") as f:
+    f.write('{field} : {userinput}'.format(field=field, userinput=userinput))
+
+  return
 
 # This function displays the appropriate menu and returns the option selected
 def runmenu(menu, parent):
@@ -50,6 +69,7 @@ def runmenu(menu, parent):
   # work out what text to display as the last menu option
   if parent is None:
     lastoption = "Exit"
+    #curses.beep()
   else:
     lastoption = "Revenir au menu %s " % parent['title']
 
@@ -67,9 +87,8 @@ def runmenu(menu, parent):
       screen.addstr(2,2, menu['title'], curses.A_STANDOUT) # Title for this menu
       screen.addstr(4,2, menu['subtitle'], curses.A_BOLD) #Subtitle for this menu
 
-      firstmenuline = 8
-
       # Display all the menu items, showing the 'pos' item highlighted
+      firstmenuline = 8
       for index in range(optioncount):
         textstyle = n
         if pos==index:
@@ -108,18 +127,10 @@ def processmenu(menu, parent=None):
     getin = runmenu(menu, parent)
     if getin == optioncount:
         exitmenu = True
-    elif menu['options'][getin]['type'] == COMMAND:
-      curses.def_prog_mode()    # save curent curses environment
-      os.system('reset')
-      if menu['options'][getin]['title'] == 'Pianobar':
-        os.system('amixer cset numid=3 1') # Sets audio output on the pi to 3.5mm headphone jack
-      screen.clear() #clears previous screen
-      os.system(menu['options'][getin]['command']) # run the command
-      screen.clear() #clears previous screen on key press and updates display based on pos
-      curses.reset_prog_mode()   # reset to 'current' curses environment
-      curses.curs_set(1)         # reset doesn't do this right
-      curses.curs_set(0)
-      os.system('amixer cset numid=3 2') # Sets audio output on the pi back to HDMI
+    elif menu['options'][getin]['type'] == FORM:
+          screen.clear()
+          leavemessage(menu['options'][getin]['title'])
+          screen.clear() #clears previous screen on key press and updates display based on pos
     elif menu['options'][getin]['type'] == MENU:
           screen.clear() #clears previous screen on key press and updates display based on pos
           processmenu(menu['options'][getin], menu) # display the submenu

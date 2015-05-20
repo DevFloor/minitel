@@ -9,7 +9,7 @@ import curses, os #curses is the interface for capturing key presses on the menu
 screen = curses.initscr() #initializes a new window for capturing key presses
 curses.noecho() # Disables automatic echoing of key presses (prevents program from input each key twice)
 curses.cbreak() # Disables line buffering (runs each key as it is pressed rather than waiting for the return key to pressed)
-curses.start_color() # Lets you use colors when highlighting selected menu option
+#curses.start_color() # Lets you use colors when highlighting selected menu option
 screen.keypad(1) # Capture input from keypad
 
 # Change this to use different colors when highlighting
@@ -22,33 +22,23 @@ COMMAND = "command"
 EXITMENU = "exitmenu"
 
 menu_data = {
-  'title': "Program Launcher", 'type': MENU, 'subtitle': "Please select an option...",
+  'title': "Livre d'Or du DevFloor", 'type': MENU, 'subtitle': "Tapez le chiffre + Entrer",
   'options':[
-    { 'title': "XBMC", 'type': COMMAND, 'command': 'xbmc' },
-        { 'title': "Emulation Station - Hit F4 to return to menu, Esc to exit game", 'type': COMMAND, 'command': 'emulationstation' },
-        { 'title': "Ur-Quan Masters", 'type': COMMAND, 'command': 'uqm' },
-        { 'title': "Dosbox Games", 'type': MENU, 'subtitle': "Please select an option...",
+   
+    { 'title': "Laisser un message", 'type': MENU, 'subtitle': "Tapez le chiffre + Entrer",
         'options': [
-          { 'title': "Midnight Rescue", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/games/SSR/SSR.EXE -exit' },
-          { 'title': "Outnumbered", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/games/SSO/SSO.EXE -exit' },
-          { 'title': "Treasure Mountain", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/games/SST/SST.EXE -exit' },
+          { 'title': "Nom", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/games/SSR/SSR.EXE -exit' },
+          { 'title': "Email", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/games/SSO/SSO.EXE -exit' },
+          { 'title': "Message", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/games/SST/SST.EXE -exit' },
+          { 'title': "Envoyer sur le serveur telematique", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/games/SST/SST.EXE -exit' },
         ]
-        },
-        { 'title': "Pianobar", 'type': COMMAND, 'command': 'clear && pianobar' },
-        { 'title': "Windows 3.1", 'type': COMMAND, 'command': 'dosbox /media/samba/Apps/dosbox/doswin/WINDOWS/WIN.COM -conf /home/pi/scripts/dosbox2.conf -exit' },
-        { 'title': "Reboot", 'type': MENU, 'subtitle': "Select Yes to Reboot",
-        'options': [
-          {'title': "NO", 'type': EXITMENU, },
-          {'title': "", 'type': COMMAND, 'command': '' },
-          {'title': "", 'type': COMMAND, 'command': '' },
-          {'title': "", 'type': COMMAND, 'command': '' },
-          {'title': "YES", 'type': COMMAND, 'command': 'sudo shutdown -r -time now' },
-          {'title': "", 'type': COMMAND, 'command': '' },
-          {'title': "", 'type': COMMAND, 'command': '' },
-          {'title': "", 'type': COMMAND, 'command': '' },
-        ]
-        },
-
+    },
+    { 'title': "L'histoire du DevFloor", 
+      'type': MENU, 
+      'subtitle': "Le DevFloor est situe dans un quartier central et anime en plein coeur\n de Paris. Nous fournissons aux residents tout le necessaire pour travailler\n et recevoir leurs partenaires et clients dans les meilleures conditions.",
+      'options': []
+    },
+    
   ]
 }
 
@@ -61,7 +51,7 @@ def runmenu(menu, parent):
   if parent is None:
     lastoption = "Exit"
   else:
-    lastoption = "Return to %s menu" % parent['title']
+    lastoption = "Revenir au menu %s " % parent['title']
 
   optioncount = len(menu['options']) # how many options in this menu
 

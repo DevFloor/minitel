@@ -20,6 +20,7 @@ resurrection de notre antique minitel
    - Fnct+P 4
    - Fnct+T A
    - Fnct+T E
+ - Lancer le menu 3615 : python menu.py
 
 ## Hardware Links
 

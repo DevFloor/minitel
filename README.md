@@ -16,6 +16,10 @@ resurrection de notre antique minitel
 
 ## Notes
  - ssh pi@192.168.103.146 -p devfloor
+ - Avant de booter le Pi, allumer le minitel puis taper au clavier : 
+   - Fnct+P 4
+   - Fnct+T A
+   - Fnct+T E
 
 ## Hardware Links
 

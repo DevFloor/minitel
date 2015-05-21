@@ -114,7 +114,7 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
   def get_slack_messages(self):
     return '[Aucun message]'
 
-  def leavemessage(self, field):
+  def leavemessage(self, menu, field):
 
     # send message
     if field == Minitel.SERVTELEMATIQUE:
@@ -141,13 +141,15 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     # get field value
     else:
       self.screen.border(0)
-      self.screen.addstr(8,2, "Entrez votre {0}: ".format(field))
+
+      line = 2
+      line = self.write(line, 2, menu.title, pspace=1, style=curses.A_STANDOUT)
+      line = self.write(line,2, "Entrez votre {0}: ".format(field))
+
       self.screen.refresh()
 
-      # get user input (with echo)
-      curses.echo()
-      userinput = self.screen.getstr(9, 2).strip()
-      curses.noecho()
+      # get user input
+      userinput = self.get_user_input(line, 2)
 
       # keep data in leavemessage_dict
       self.leavemessage_dict[field] = userinput
@@ -171,6 +173,14 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
       line += 1
 
     return (line + pspace)
+
+  def get_user_input(self, line, column):
+    # get user input (with echo)
+    curses.echo()
+    userinput = self.screen.getstr(line, column)
+    curses.noecho()
+
+    return userinput.strip()
 
   def show_quick_message(self, message, time=2):
     self.screen.border(0)
@@ -284,13 +294,13 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     while not exitmenu:
       getin = self.runmenu(menu, parent)
       if getin == len(menu.submenus):
-          exitmenu = True
+        exitmenu = True
       elif isinstance(menu.submenus[getin], MinitelFormMenu):
-            self.leavemessage(field=menu.submenus[getin].title)
+        self.leavemessage(menu, field=menu.submenus[getin].title)
       elif isinstance(menu.submenus[getin], MinitelStandardMenu):
-            self.processmenu(menu.submenus[getin], menu)
+        self.processmenu(menu.submenus[getin], menu)
       elif isinstance(menu.submenus[getin], MinitelExitMenu):
-            exitmenu = True
+        exitmenu = True
 
 # Main program
 if __name__ == '__main__':

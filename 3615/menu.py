@@ -4,7 +4,7 @@
 from time import sleep
 import curses, os
 
-from slack import get_slack_messages
+from slack import get_slack_messages, post_slack_message
 
 class MinitelAbstractMenu(object):
   def __init__(self):

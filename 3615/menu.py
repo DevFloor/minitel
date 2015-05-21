@@ -10,6 +10,8 @@ class MinitelAbstractMenu(object):
   def __init__(self):
     raise StandardError('MinitelAbstractMenu is abstract')
 
+  def __str__(self):
+    return '{0}<title:{1}>'.format(self.__class__.__name__, self.title)
   def fetch(self):
     '''
     Preloads menu data.
@@ -17,15 +19,17 @@ class MinitelAbstractMenu(object):
     pass
 
 class MinitelStandardMenu(MinitelAbstractMenu):
-  def __init__(self, title, subtitle=None, submenus=[]):
+  def __init__(self, title, subtitle=None, show_logo_time=None, submenus=[]):
     assert(title is not None)
     self.title = title
     self.subtitle = subtitle
     self.submenus = submenus
+    self.show_logo_time = show_logo_time
 
 class MinitelFormMenu(MinitelAbstractMenu):
   def __init__(self, title):
     self.title = title
+    self.show_logo_time = None
 
 class MinitelGetSlackMessagesMenu(MinitelStandardMenu):
   def fetch(self):
@@ -46,9 +50,6 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
 
     # message
     self.leavemessage_dict = {}
-
-    # result message
-    self.result_message = ''
 
   def run_root_menu(self):
     menu_leave_message = MinitelStandardMenu(
@@ -71,6 +72,7 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     menu_root = MinitelStandardMenu(
       title="Livre d'Or de l apero DevFloor",
       subtitle="Tapez le chiffre + Entree",
+      show_logo_time=1,
       submenus=[
         menu_leave_message,
         menu_get_messages,
@@ -117,9 +119,6 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     # send message
     if field == Minitel.SERVTELEMATIQUE:
 
-      # result message
-      self.result_message = ' > Message teletransmit avec succes'
-
       # write to file
       with open("livredor.txt", "a") as f:
         for field in ['Nom', 'Email', 'Message']:
@@ -136,10 +135,16 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
           username='{0} via Minitel'.format(self.leavemessage_dict.get('Nom') or 'Anonyme'),
         )
 
+      # show quick message
+      self.show_quick_message(' > Message teletransmit avec succes')
+
     # get field value
     else:
+      self.screen.border(0)
       self.screen.addstr(8,2, "Entrez votre {0}: ".format(field))
       self.screen.refresh()
+
+      # get user input (with echo)
       curses.echo()
       userinput = self.screen.getstr(9, 2).strip()
       curses.noecho()
@@ -147,7 +152,10 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
       # keep data in leavemessage_dict
       self.leavemessage_dict[field] = userinput
 
-  def write(self, line, column, text, pspace=0, style=curses.A_BOLD):
+      # clear
+      self.screen.clear()
+
+  def write(self, line, column, text, pspace=0, style=curses.A_NORMAL):
     '''
     Writes text.
       `line`    line number
@@ -164,15 +172,30 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
 
     return (line + pspace)
 
+  def show_quick_message(self, message, time=2):
+    self.screen.border(0)
+    self.write(2, 2, message)
+    self.screen.refresh()
+
+    # sleep
+    if time is not None:
+      sleep(time)
+
+    # clear
+    self.screen.clear()
+
   def runmenu(self, menu, parent):
     '''
     This function displays the appropriate menu and returns the option selected.
     '''
 
+    # show logo if necessary
+    if menu.show_logo_time is not None:
+      self.show_logo(menu.show_logo_time)
+
     # work out what text to display as the last menu option
     if parent is None:
-      lastoption = "Exit"
-      curses.beep()
+      lastoption = "Quitter 3615 NUMA"
     else:
       lastoption = "Revenir au menu {0}".format(parent.title)
 
@@ -194,16 +217,14 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     x = None
 
     # Loop until return key is pressed
-    while x !=ord('\n'):
+    while x != ord('\n'):
       if pos != oldpos:
         oldpos = pos
         self.screen.border(0)
 
         line = 2
         line = self.write(line, 2, menu.title, pspace=1, style=curses.A_STANDOUT)
-        line = self.write(line, 2, menu.subtitle, pspace=1)
-        line = self.write(line, 2, self.result_message, pspace=1)
-        self.result_message = '' # reset message
+        line = self.write(line, 2, menu.subtitle, pspace=1, style=curses.A_BOLD)
 
         # display menu items, showing the 'pos' item highlighted
         for index in range(optioncount):
@@ -215,7 +236,8 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
         # refresh
         self.screen.refresh()
 
-      x = self.screen.getch() # Gets user input
+      # Gets user input
+      x = self.screen.getch()
 
       # What is user input?
       if x >= ord('1') and x <= ord(str(optioncount+1)):
@@ -229,8 +251,28 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
           pos += -1
         else: pos = optioncount
 
+    # clear
+    self.screen.clear()
+
     # return index of the selected item
     return pos
+
+  def show_logo(self, time=0.5):
+
+    # get logo
+    with open('logo.txt', 'r') as f:
+      logo = f.read()
+
+    # display logo
+    self.screen.border(0)
+    self.write(2, 2, logo)
+    self.screen.refresh()
+
+    # sleep
+    sleep(time)
+
+    # clear
+    self.screen.clear()
 
   def processmenu(self, menu, parent=None):
     '''
@@ -244,14 +286,9 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
       if getin == len(menu.submenus):
           exitmenu = True
       elif isinstance(menu.submenus[getin], MinitelFormMenu):
-            self.screen.clear()
             self.leavemessage(field=menu.submenus[getin].title)
-            self.screen.clear()
       elif isinstance(menu.submenus[getin], MinitelStandardMenu):
-            self.screen.clear()
-            # display the submenu
             self.processmenu(menu.submenus[getin], menu)
-            self.screen.clear()
       elif isinstance(menu.submenus[getin], MinitelExitMenu):
             exitmenu = True
 

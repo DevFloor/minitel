@@ -5,10 +5,30 @@ import requests
 from time import sleep
 import curses, os
 
-MENU = "menu"
-COMMAND = "command"
-FORM = "form"
-EXITMENU = "exitmenu"
+class MinitelAbstractMenu(object):
+  def __init__(self):
+    raise StandardError('MinitelAbstractMenu is abstract')
+
+  def fetch(self):
+    '''
+    Preloads menu data.
+    '''
+    pass
+
+class MinitelStandardMenu(MinitelAbstractMenu):
+  def __init__(self, title, subtitle=None, submenus=[]):
+    assert(title is not None)
+    self.title = title
+    self.subtitle = subtitle
+    self.submenus = submenus
+
+class MinitelFormMenu(MinitelAbstractMenu):
+  def __init__(self, title):
+    self.title = title
+
+class MinitelGetSlackMessagesMenu(MinitelStandardMenu):
+  def fetch(self):
+    self.subtitle = 'Loading...'
 
 class Minitel(object):
 
@@ -24,34 +44,37 @@ class Minitel(object):
     # result message
     self.result_message = ''
 
-    self.menu_leave_message = {
-      'title': "Laisser un message",
-      'type': MENU,
-      'subtitle': "Tapez le chiffre + Entree",
-      'options': [
-        { 'title': "Nom", 'type': FORM },
-        { 'title': "Email", 'type': FORM },
-        { 'title': "Message", 'type': FORM},
-        { 'title': Minitel.SERVTELEMATIQUE, 'type': FORM },
+  def run_root_menu(self):
+    menu_leave_message = MinitelStandardMenu(
+      title='Laisser un message',
+      subtitle='Tapez le chiffre + Entree',
+      submenus=[
+        MinitelFormMenu('Nom'),
+        MinitelFormMenu('Email'),
+        MinitelFormMenu('Message'),
+        MinitelFormMenu(Minitel.SERVTELEMATIQUE),
       ]
-    }
-    self.menu_history = {
-      'title': "L'histoire du DevFloor",
-      'type': MENU,
-      'subtitle': Minitel.HISTORY_MESSAGE,
-      'options': []
-    }
-    self.menu_root = {
-      'title': "Livre d'Or de l apero DevFloor",
-      'type': MENU,
-      'subtitle': "Tapez le chiffre + Entree",
-      'options':[
-        self.menu_leave_message,
-        self.menu_history,
+    )
+    menu_get_messages = MinitelGetSlackMessagesMenu(
+      title='Consulter les messages',
+    )
+    menu_history = MinitelStandardMenu(
+      title="L'histoire du DevFloor",
+      subtitle=Minitel.HISTORY_MESSAGE,
+    )
+    menu_root = MinitelStandardMenu(
+      title="Livre d'Or de l apero DevFloor",
+      subtitle="Tapez le chiffre + Entree",
+      submenus=[
+        menu_leave_message,
+        menu_get_messages,
+        menu_history,
       ]
-    }
+    )
 
-  def run(self):
+    self.run(menu_root)
+
+  def run(self, menu_root):
 
     # init curses
 
@@ -73,7 +96,7 @@ class Minitel(object):
     self.screen.keypad(1)
 
     # run menu
-    self.processmenu(self.menu_root)
+    self.processmenu(menu_root)
 
     # Important!
     # This closes out the menu system and returns you to the bash prompt.
@@ -93,6 +116,9 @@ class Minitel(object):
         "text":text,
       },
     )
+
+  def get_slack_messages(self):
+    return '[Aucun message]'
 
   def leavemessage(self, field):
 
@@ -137,11 +163,16 @@ class Minitel(object):
     # work out what text to display as the last menu option
     if parent is None:
       lastoption = "Exit"
-      #curses.beep()
+      curses.beep()
     else:
-      lastoption = "Revenir au menu %s " % parent['title']
+      lastoption = "Revenir au menu {0}".format(parent.title)
 
-    optioncount = len(menu['options']) # how many options in this menu
+    # how many options in this menu
+    optioncount = len(menu.submenus)
+
+    # fetch menu
+    # will allow the menu to preload data if needed
+    menu.fetch()
 
     # pos is the zero-based index of the hightlighted menu option. Every time
     # runmenu is called, position returns to 0, when runmenu ends the position
@@ -158,8 +189,8 @@ class Minitel(object):
       if pos != oldpos:
         oldpos = pos
         self.screen.border(0)
-        self.screen.addstr(2,2, menu['title'], curses.A_STANDOUT)
-        self.screen.addstr(4,2, menu['subtitle'], curses.A_BOLD)
+        self.screen.addstr(2,2, menu.title, curses.A_STANDOUT)
+        self.screen.addstr(4,2, menu.subtitle, curses.A_BOLD)
         self.screen.addstr(6,2, self.result_message, curses.A_BOLD)
         self.result_message = '' # reset message
 
@@ -169,7 +200,7 @@ class Minitel(object):
           textstyle = curses.A_NORMAL
           if pos==index:
             textstyle = curses.color_pair(1)
-          self.screen.addstr(firstmenuline+index,4, "%d - %s" % (index+1, menu['options'][index]['title']), textstyle)
+          self.screen.addstr(firstmenuline+index,4, "%d - %s" % (index+1, menu.submenus[index].title), textstyle)
         # Now display Exit/Return at bottom of menu
         textstyle = curses.A_NORMAL
         if pos==optioncount:
@@ -200,23 +231,22 @@ class Minitel(object):
     This function calls showmenu and then acts on the selected item.
     '''
 
-    optioncount = len(menu['options'])
-
     #Loop until the user exits the menu
     exitmenu = False
     while not exitmenu:
       getin = self.runmenu(menu, parent)
-      if getin == optioncount:
+      if getin == len(menu.submenus):
           exitmenu = True
-      elif menu['options'][getin]['type'] == FORM:
+      elif isinstance(menu.submenus[getin], MinitelFormMenu):
             self.screen.clear()
-            self.leavemessage(menu['options'][getin]['title'])
+            self.leavemessage(field=menu.submenus[getin].title)
             self.screen.clear()
-      elif menu['options'][getin]['type'] == MENU:
+      elif isinstance(menu.submenus[getin], MinitelStandardMenu):
             self.screen.clear()
-            self.processmenu(menu['options'][getin], menu) # display the submenu
+            # display the submenu
+            self.processmenu(menu.submenus[getin], menu)
             self.screen.clear()
-      elif menu['options'][getin]['type'] == EXITMENU:
+      elif isinstance(menu.submenus[getin], MinitelExitMenu):
             exitmenu = True
 
 # Main program
@@ -224,4 +254,4 @@ if __name__ == '__main__':
 
   # Run Minitel
   minitel = Minitel()
-  minitel.run()
+  minitel.run_root_menu()

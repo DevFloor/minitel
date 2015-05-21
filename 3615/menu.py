@@ -238,10 +238,10 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
 
         # display menu items, showing the 'pos' item highlighted
         for index in range(optioncount):
-          line = self.write(line, 4, "%d - %s" % (index+1, menu.submenus[index].title), style=(curses.color_pair(1) if pos == index else curses.A_NORMAL))
+          line = self.write(line, 4, "%d - %s" % (index+1, menu.submenus[index].title), style=(curses.A_STANDOUT if pos == index else curses.A_NORMAL))
 
         # display exit
-        line = self.write(line, 4, "%d - %s" % (optioncount+1, lastoption), style=(curses.color_pair(1) if pos == optioncount else curses.A_NORMAL))
+        line = self.write(line, 4, "%d - %s" % (optioncount+1, lastoption), style=(curses.A_STANDOUT if pos == optioncount else curses.A_NORMAL))
 
         # refresh
         self.screen.refresh()

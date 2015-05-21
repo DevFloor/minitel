@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Topmenu and the submenus are based of the example found at this location http://blog.skeltonnetworks.com/2010/03/python-curses-custom-menu/
-# The rest of the work was done by Matthew Bennett and he requests you keep these two mentions when you reuse the code :-)
-# Basic code refactoring by Andrew Scheller
 
 import requests
 from time import sleep
@@ -11,10 +8,12 @@ import curses, os
 MENU = "menu"
 COMMAND = "command"
 FORM = "form"
-SERVTELEMATIQUE = "Envoyer sur le serveur telematique de Numa"
 EXITMENU = "exitmenu"
 
 class Minitel(object):
+
+  SERVTELEMATIQUE = "Envoyer sur le serveur telematique de Numa"
+  HISTORY_MESSAGE = '''Le DevFloor est situe dans un quartier central et anime en plein coeur\n de Paris. Nous fournissons aux residents tout le necessaire pour travailler\n et recevoir leurs partenaires et clients dans les meilleures conditions.'''
 
   def __init__(self):
     super(Minitel, self).__init__()
@@ -25,28 +24,30 @@ class Minitel(object):
     # result message
     self.result_message = ''
 
-    self.menu_data = {
+    self.menu_leave_message = {
+      'title': "Laisser un message",
+      'type': MENU,
+      'subtitle': "Tapez le chiffre + Entree",
+      'options': [
+        { 'title': "Nom", 'type': FORM },
+        { 'title': "Email", 'type': FORM },
+        { 'title': "Message", 'type': FORM},
+        { 'title': Minitel.SERVTELEMATIQUE, 'type': FORM },
+      ]
+    }
+    self.menu_history = {
+      'title': "L'histoire du DevFloor",
+      'type': MENU,
+      'subtitle': Minitel.HISTORY_MESSAGE,
+      'options': []
+    }
+    self.menu_root = {
       'title': "Livre d'Or de l apero DevFloor",
       'type': MENU,
       'subtitle': "Tapez le chiffre + Entree",
       'options':[
-        {
-          'title': "Laisser un message",
-          'type': MENU,
-          'subtitle': "Tapez le chiffre + Entree",
-          'options': [
-            { 'title': "Nom", 'type': FORM },
-            { 'title': "Email", 'type': FORM },
-            { 'title': "Message", 'type': FORM},
-            { 'title': SERVTELEMATIQUE, 'type': FORM },
-          ]
-        },
-        {
-          'title': "L'histoire du DevFloor",
-          'type': MENU,
-          'subtitle': "Le DevFloor est situe dans un quartier central et anime en plein coeur\n de Paris. Nous fournissons aux residents tout le necessaire pour travailler\n et recevoir leurs partenaires et clients dans les meilleures conditions.",
-          'options': []
-        },
+        self.menu_leave_message,
+        self.menu_history,
       ]
     }
 
@@ -72,7 +73,7 @@ class Minitel(object):
     self.screen.keypad(1)
 
     # run menu
-    self.processmenu(self.menu_data)
+    self.processmenu(self.menu_root)
 
     # Important!
     # This closes out the menu system and returns you to the bash prompt.
@@ -96,10 +97,10 @@ class Minitel(object):
   def leavemessage(self, field):
 
     # send message
-    if field == SERVTELEMATIQUE:
+    if field == Minitel.SERVTELEMATIQUE:
 
       # result message
-      self.result_message = 'Message teletransmit avec succes'
+      self.result_message = ' > Message teletransmit avec succes'
 
       # write to file
       with open("livredor.txt", "a") as f:
@@ -200,8 +201,10 @@ class Minitel(object):
     '''
 
     optioncount = len(menu['options'])
+
+    #Loop until the user exits the menu
     exitmenu = False
-    while not exitmenu: #Loop until the user exits the menu
+    while not exitmenu:
       getin = self.runmenu(menu, parent)
       if getin == optioncount:
           exitmenu = True

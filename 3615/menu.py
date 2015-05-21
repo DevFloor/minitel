@@ -153,6 +153,7 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
       self.show_quick_message(
         title=menu.title,
         message=' > Message teletransmit avec succes !',
+        time=2,
       )
 
     # get field value
@@ -199,7 +200,7 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
 
     return userinput.strip()
 
-  def show_quick_message(self, message, title=None, time=2):
+  def show_quick_message(self, message, title=None, time=None):
 
     self.screen.border(0)
 

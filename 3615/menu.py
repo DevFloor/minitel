@@ -4,6 +4,7 @@
 # The rest of the work was done by Matthew Bennett and he requests you keep these two mentions when you reuse the code :-)
 # Basic code refactoring by Andrew Scheller
 
+import requests
 from time import sleep
 import curses, os #curses is the interface for capturing key presses on the menu, os launches the files
 screen = curses.initscr() #initializes a new window for capturing key presse
@@ -26,7 +27,7 @@ EXITMENU = "exitmenu"
 menu_data = {
   'title': "Livre d'Or de l apero DevFloor", 'type': MENU, 'subtitle': "Tapez le chiffre + Entree",
   'options':[
-   
+
     { 'title': "Laisser un message", 'type': MENU, 'subtitle': "Tapez le chiffre + Entree",
         'options': [
           { 'title': "Nom", 'type': FORM },
@@ -35,14 +36,30 @@ menu_data = {
           { 'title': SERVTELEMATIQUE, 'type': FORM },
         ]
     },
-    { 'title': "L'histoire du DevFloor", 
-      'type': MENU, 
+    { 'title': "L'histoire du DevFloor",
+      'type': MENU,
       'subtitle': "Le DevFloor est situe dans un quartier central et anime en plein coeur\n de Paris. Nous fournissons aux residents tout le necessaire pour travailler\n et recevoir leurs partenaires et clients dans les meilleures conditions.",
       'options': []
     },
-    
+
   ]
 }
+
+def post_slack_message(text, username='Minitel'):
+  requests.post(
+    url="https://slack.com/api/chat.postMessage",
+    params = {
+      "token":"xoxp-3673911929-3918993035-5010858377-0403b1",
+    },
+    data = {
+      "username":username,
+      "icon_url":"http://mazaheri.s3.amazonaws.com/minitel.png",
+      "channel":"C050AQ1AB", # Minitel channel
+      "text":text,
+    },
+  )
+
+leavemessage_dict = {}
 
 def leavemessage(field):
 
@@ -52,7 +69,7 @@ def leavemessage(field):
     return
 
   screen.addstr(8,2, "Entrez votre " + field)
-  screen.refresh()  
+  screen.refresh()
   curses.echo()
   userinput = screen.getstr(9, 2)
   userinput = userinput + '\n'
@@ -60,6 +77,16 @@ def leavemessage(field):
 
   with open("livredor.txt", "a") as f:
     f.write('{field} : {userinput}'.format(field=field, userinput=userinput))
+
+  # keep data in leavemessage_dict
+  leavemessage_dict[field] = userinput
+
+  # send Slack message
+  if field == 'Message':
+    post_slack_message(
+      text=leavemessage_dict['Message'],
+      username='{0} via Minitel'.format(leavemessage_dict['Nom']),
+    )
 
   return
 

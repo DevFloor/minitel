@@ -64,7 +64,9 @@ class MinitelGetSlackMessagesMenu(MinitelStandardMenu):
 class Minitel(object):
 
   SERVTELEMATIQUE = "Envoyer sur le serveur telematique de Numa"
-  HISTORY_MESSAGE = '''Le DevFloor est situe dans un quartier central et anime en plein coeur\n de Paris. Nous fournissons aux residents tout le necessaire pour travailler\n et recevoir leurs partenaires et clients dans les meilleures conditions.'''
+  HISTORY_MESSAGE = '''Le DevFloor est situe dans un quartier central et anime en plein coeur
+de Paris. Nous fournissons aux residents tout le necessaire pour travailler
+et recevoir leurs partenaires et clients dans les meilleures conditions.'''
 
   def __init__(self):
     super(Minitel, self).__init__()
@@ -186,6 +188,23 @@ class Minitel(object):
       # keep data in leavemessage_dict
       self.leavemessage_dict[field] = userinput
 
+  def write(self, line, column, text, pspace=0, style=curses.A_BOLD):
+    '''
+    Writes text.
+      `line`    line number
+      `column`  column number
+      `text`    the text to print
+      `pspace`  the paragraph space after the text block
+      `style`   the curse style
+    '''
+
+    text_lines = text.split('\n')
+    for text_line in text_lines:
+      self.screen.addstr(line, column, text_line, style)
+      line += 1
+
+    return (line + pspace)
+
   def runmenu(self, menu, parent):
     '''
     This function displays the appropriate menu and returns the option selected.
@@ -220,25 +239,22 @@ class Minitel(object):
       if pos != oldpos:
         oldpos = pos
         self.screen.border(0)
-        self.screen.addstr(2,2, menu.title, curses.A_STANDOUT)
-        self.screen.addstr(4,2, menu.subtitle, curses.A_BOLD)
-        self.screen.addstr(6,2, self.result_message, curses.A_BOLD)
+
+        line = 2
+        line = self.write(line, 2, menu.title, pspace=1, style=curses.A_STANDOUT)
+        line = self.write(line, 2, menu.subtitle, pspace=1)
+        line = self.write(line, 2, self.result_message, pspace=1)
         self.result_message = '' # reset message
 
-        # Display all the menu items, showing the 'pos' item highlighted
-        firstmenuline = 9
+        # display menu items, showing the 'pos' item highlighted
         for index in range(optioncount):
-          textstyle = curses.A_NORMAL
-          if pos==index:
-            textstyle = curses.color_pair(1)
-          self.screen.addstr(firstmenuline+index,4, "%d - %s" % (index+1, menu.submenus[index].title), textstyle)
-        # Now display Exit/Return at bottom of menu
-        textstyle = curses.A_NORMAL
-        if pos==optioncount:
-          textstyle = curses.color_pair(1)
-        self.screen.addstr(firstmenuline+optioncount,4, "%d - %s" % (optioncount+1, lastoption), textstyle)
+          line = self.write(line, 4, "%d - %s" % (index+1, menu.submenus[index].title), style=(curses.color_pair(1) if pos == index else curses.A_NORMAL))
+
+        # display exit
+        line = self.write(line, 4, "%d - %s" % (optioncount+1, lastoption), style=(curses.color_pair(1) if pos == optioncount else curses.A_NORMAL))
+
+        # refresh
         self.screen.refresh()
-        # finished updating screen
 
       x = self.screen.getch() # Gets user input
 

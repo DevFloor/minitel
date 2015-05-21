@@ -6,15 +6,15 @@ import curses, os
 
 from slack import get_slack_messages, post_slack_message
 
-class MinitelAbstractMenu(object):
+class MinitelAbstractScreen(object):
   def __init__(self):
-    raise StandardError('MinitelAbstractMenu is abstract')
+    raise StandardError('MinitelAbstractScreen is abstract')
 
   def __str__(self):
     return '{0}<title:{1}>'.format(self.__class__.__name__, self.title)
   def fetch(self, minitel):
     '''
-    Preloads menu data.
+    Preloads screen data.
     '''
     pass
   def pre_fetch(self, minitel):
@@ -23,7 +23,11 @@ class MinitelAbstractMenu(object):
     '''
     pass
 
-class MinitelStandardMenu(MinitelAbstractMenu):
+class MinitelMenuScreen(MinitelAbstractScreen):
+  '''
+  A screen to display a menu.
+  '''
+
   def __init__(self, title, subtitle=None, show_logo=False, submenus=[]):
     assert(title is not None)
     self.title = title
@@ -31,12 +35,20 @@ class MinitelStandardMenu(MinitelAbstractMenu):
     self.submenus = submenus
     self.show_logo = show_logo
 
-class MinitelFormMenu(MinitelAbstractMenu):
+class MinitelFormInputScreen(MinitelAbstractScreen):
+  '''
+  A screen to prompt the user for a form input.
+  '''
+
   def __init__(self, title):
     self.title = title
     self.show_logo = False
 
-class MinitelGetSlackMessagesMenu(MinitelStandardMenu):
+class MinitelGetSlackMessagesScreen(MinitelMenuScreen):
+  '''
+  A screen to show Slack Messages.
+  '''
+
   def pre_fetch(self, minitel):
     minitel.show_quick_message(
       title=self.title,
@@ -63,24 +75,24 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     self.leavemessage_dict = {}
 
   def run_root_menu(self):
-    menu_leave_message = MinitelStandardMenu(
+    menu_leave_message = MinitelMenuScreen(
       title='Laisser un message',
       subtitle='Tapez le chiffre + Entree',
       submenus=[
-        MinitelFormMenu('Nom'),
-        MinitelFormMenu('Email'),
-        MinitelFormMenu('Message'),
-        MinitelFormMenu(Minitel.SERVTELEMATIQUE),
+        MinitelFormInputScreen('Nom'),
+        MinitelFormInputScreen('Email'),
+        MinitelFormInputScreen('Message'),
+        MinitelFormInputScreen(Minitel.SERVTELEMATIQUE),
       ]
     )
-    menu_get_messages = MinitelGetSlackMessagesMenu(
+    menu_get_messages = MinitelGetSlackMessagesScreen(
       title='Consulter les messages',
     )
-    menu_history = MinitelStandardMenu(
+    menu_history = MinitelMenuScreen(
       title="L'histoire du DevFloor",
       subtitle=Minitel.HISTORY_MESSAGE,
     )
-    menu_root = MinitelStandardMenu(
+    menu_root = MinitelMenuScreen(
       title="Livre d'Or de l'apero DevFloor",
       subtitle="Tapez le chiffre + Entree",
       show_logo=True,
@@ -327,11 +339,11 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
       getin = self.runmenu(menu, parent)
       if getin == len(menu.submenus):
         exitmenu = True
-      elif isinstance(menu.submenus[getin], MinitelFormMenu):
+      elif isinstance(menu.submenus[getin], MinitelFormInputScreen):
         self.leavemessage(menu, field=menu.submenus[getin].title)
-      elif isinstance(menu.submenus[getin], MinitelStandardMenu):
+      elif isinstance(menu.submenus[getin], MinitelMenuScreen):
         self.processmenu(menu.submenus[getin], menu)
-      elif isinstance(menu.submenus[getin], MinitelExitMenu):
+      elif isinstance(menu.submenus[getin], MinitelExitScreen):
         exitmenu = True
 
 # Main program

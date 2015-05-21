@@ -70,9 +70,9 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
       subtitle=Minitel.HISTORY_MESSAGE,
     )
     menu_root = MinitelStandardMenu(
-      title="Livre d'Or de l apero DevFloor",
+      title="Livre d'Or de l'apero DevFloor",
       subtitle="Tapez le chiffre + Entree",
-      show_logo_time=1,
+      show_logo_time=4,
       submenus=[
         menu_leave_message,
         menu_get_messages,

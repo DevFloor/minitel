@@ -20,7 +20,10 @@ resurrection de notre antique minitel
    - Fnct+P 4
    - Fnct+T A
    - Fnct+T E
- - Lancer le menu 3615 : python menu.py
+ - Lancer le menu 3615 : `bash menu.sh`
+ - Installation :
+   - `sudo apt-get install python-pip`
+   - `sudo pip install -r requirements.txt`
 
 ## Hardware Links
 

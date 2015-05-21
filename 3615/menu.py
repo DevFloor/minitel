@@ -274,19 +274,24 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
         self.screen.refresh()
 
       # Gets user input
-      x = self.screen.getch()
+      x = self.screen.getch(line, 4)
 
       # What is user input?
       if x >= ord('1') and x <= ord(str(optioncount+1)):
-        pos = x - ord('0') - 1 # convert keypress back to a number, then subtract 1 to get index
+        # convert keypress back to a number, then subtract 1 to get index
+        pos = x - ord('0') - 1
       elif x == 258: # down arrow
         if pos < optioncount:
           pos += 1
-        else: pos = 0
+        else:
+          curses.beep()
       elif x == 259: # up arrow
         if pos > 0:
-          pos += -1
-        else: pos = optioncount
+          pos -= 1
+        else:
+          curses.beep()
+      elif x != ord('\n'):
+        curses.beep()
 
     # clear
     self.screen.clear()

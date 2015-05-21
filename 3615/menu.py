@@ -12,9 +12,14 @@ class MinitelAbstractMenu(object):
 
   def __str__(self):
     return '{0}<title:{1}>'.format(self.__class__.__name__, self.title)
-  def fetch(self):
+  def fetch(self, minitel):
     '''
     Preloads menu data.
+    '''
+    pass
+  def pre_fetch(self, minitel):
+    '''
+    Called before fetch.
     '''
     pass
 
@@ -32,7 +37,13 @@ class MinitelFormMenu(MinitelAbstractMenu):
     self.show_logo_time = None
 
 class MinitelGetSlackMessagesMenu(MinitelStandardMenu):
-  def fetch(self):
+  def pre_fetch(self, minitel):
+    minitel.show_quick_message(
+      title=self.title,
+      message='Chargement des messages...'
+    )
+
+  def fetch(self, minitel):
     try:
       self.subtitle = get_slack_messages()
     except Exception:
@@ -72,7 +83,7 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     menu_root = MinitelStandardMenu(
       title="Livre d'Or de l'apero DevFloor",
       subtitle="Tapez le chiffre + Entree",
-      show_logo_time=7,
+      show_logo_time=6,
       submenus=[
         menu_leave_message,
         menu_get_messages,
@@ -111,13 +122,16 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     curses.endwin()
     os.system('clear')
 
-  def get_slack_messages(self):
-    return '[Aucun message]'
-
   def leavemessage(self, menu, field):
 
     # send message
     if field == Minitel.SERVTELEMATIQUE:
+
+      # show quick message
+      minitel.show_quick_message(
+        title=menu.title,
+        message='Envoi du message...'
+      )
 
       # write to file
       with open("livredor.txt", "a") as f:
@@ -136,7 +150,10 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
         )
 
       # show quick message
-      self.show_quick_message(' > Message teletransmit avec succes')
+      self.show_quick_message(
+        title=menu.title,
+        message=' > Message teletransmit avec succes !',
+      )
 
     # get field value
     else:
@@ -182,9 +199,15 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
 
     return userinput.strip()
 
-  def show_quick_message(self, message, time=2):
+  def show_quick_message(self, message, title=None, time=2):
+
     self.screen.border(0)
-    self.write(2, 2, message)
+
+    line = 2
+    if title:
+      line = self.write(line, 2, title, pspace=1, style=curses.A_STANDOUT)
+    line = self.write(line, 2, message)
+
     self.screen.refresh()
 
     # sleep
@@ -212,9 +235,12 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     # how many options in this menu
     optioncount = len(menu.submenus)
 
+    # pre fetch hook
+    menu.pre_fetch(minitel=self)
+
     # fetch menu
     # will allow the menu to preload data if needed
-    menu.fetch()
+    menu.fetch(minitel=self)
 
     # pos is the zero-based index of the hightlighted menu option. Every time
     # runmenu is called, position returns to 0, when runmenu ends the position

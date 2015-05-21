@@ -5,6 +5,9 @@ import requests
 from time import sleep
 import curses, os
 
+SLACK_TOKEN = "xoxp-3673911929-3918993035-5010858377-0403b1"
+SLACK_CHANNEL = "C050AQ1AB" # `minitel` channel
+
 class MinitelAbstractMenu(object):
   def __init__(self):
     raise StandardError('MinitelAbstractMenu is abstract')
@@ -28,7 +31,35 @@ class MinitelFormMenu(MinitelAbstractMenu):
 
 class MinitelGetSlackMessagesMenu(MinitelStandardMenu):
   def fetch(self):
-    self.subtitle = 'Loading...'
+    try:
+      r = requests.get(
+        url="https://slack.com/api/channels.history",
+        params = {
+          "token":SLACK_TOKEN,
+          "channel":SLACK_CHANNEL,
+          "count":"10",
+        },
+      )
+      messages = r.json()['messages']
+      subtitle = ''
+      for message in messages:
+        # ignore messages without text
+        if not message.get('text'):
+          continue
+        # if has a username
+        if message.get('username'):
+          subtitle += '{username} : {message}\n'.format(
+            username=message['username'].replace('\n', ''),
+            message=message['text'].replace('\n', ''),
+          )
+        # no username, display only text
+        else:
+          subtitle += '{message}\n'.format(
+            message=message['text'].replace('\n', ''),
+          )
+      self.subtitle = subtitle
+    except Exception:
+      self.subtitle = ' > Une erreur est survenue pendant la teletransmission'
 
 class Minitel(object):
 
@@ -107,12 +138,12 @@ class Minitel(object):
     requests.post(
       url="https://slack.com/api/chat.postMessage",
       params = {
-        "token":"xoxp-3673911929-3918993035-5010858377-0403b1",
+        "token":SLACK_TOKEN,
       },
       data = {
         "username":username,
         "icon_url":"http://mazaheri.s3.amazonaws.com/minitel.png",
-        "channel":"C050AQ1AB", # Minitel channel
+        "channel":SLACK_CHANNEL,
         "text":text,
       },
     )

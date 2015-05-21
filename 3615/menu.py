@@ -72,7 +72,7 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     menu_root = MinitelStandardMenu(
       title="Livre d'Or de l'apero DevFloor",
       subtitle="Tapez le chiffre + Entree",
-      show_logo_time=4,
+      show_logo_time=7,
       submenus=[
         menu_leave_message,
         menu_get_messages,

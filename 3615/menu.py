@@ -24,17 +24,17 @@ class MinitelAbstractMenu(object):
     pass
 
 class MinitelStandardMenu(MinitelAbstractMenu):
-  def __init__(self, title, subtitle=None, show_logo_time=None, submenus=[]):
+  def __init__(self, title, subtitle=None, show_logo=False, submenus=[]):
     assert(title is not None)
     self.title = title
     self.subtitle = subtitle
     self.submenus = submenus
-    self.show_logo_time = show_logo_time
+    self.show_logo = show_logo
 
 class MinitelFormMenu(MinitelAbstractMenu):
   def __init__(self, title):
     self.title = title
-    self.show_logo_time = None
+    self.show_logo = False
 
 class MinitelGetSlackMessagesMenu(MinitelStandardMenu):
   def pre_fetch(self, minitel):
@@ -83,7 +83,7 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     menu_root = MinitelStandardMenu(
       title="Livre d'Or de l'apero DevFloor",
       subtitle="Tapez le chiffre + Entree",
-      show_logo_time=6,
+      show_logo=True,
       submenus=[
         menu_leave_message,
         menu_get_messages,
@@ -224,8 +224,8 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     '''
 
     # show logo if necessary
-    if menu.show_logo_time is not None:
-      self.show_logo(menu.show_logo_time)
+    if menu.show_logo:
+      self.show_logo()
 
     # work out what text to display as the last menu option
     if parent is None:
@@ -294,7 +294,7 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     # return index of the selected item
     return pos
 
-  def show_logo(self, time=0.5):
+  def show_logo(self):
 
     # get logo
     with open('logo.txt', 'r') as f:
@@ -305,8 +305,8 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     self.write(2, 2, logo)
     self.screen.refresh()
 
-    # sleep
-    sleep(time)
+    # wait for user input
+    self.screen.getch()
 
     # clear
     self.screen.clear()

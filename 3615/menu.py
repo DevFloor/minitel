@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import requests
 from time import sleep
 import curses, os
 
-SLACK_TOKEN = "xoxp-3673911929-3918993035-5010858377-0403b1"
-SLACK_CHANNEL = "C050AQ1AB" # `minitel` channel
+from slack import get_slack_messages
 
 class MinitelAbstractMenu(object):
   def __init__(self):
@@ -32,32 +30,7 @@ class MinitelFormMenu(MinitelAbstractMenu):
 class MinitelGetSlackMessagesMenu(MinitelStandardMenu):
   def fetch(self):
     try:
-      r = requests.get(
-        url="https://slack.com/api/channels.history",
-        params = {
-          "token":SLACK_TOKEN,
-          "channel":SLACK_CHANNEL,
-          "count":"10",
-        },
-      )
-      messages = r.json()['messages']
-      subtitle = ''
-      for message in messages:
-        # ignore messages without text
-        if not message.get('text'):
-          continue
-        # if has a username
-        if message.get('username'):
-          subtitle += '{username} : {message}\n'.format(
-            username=message['username'].replace('\n', ''),
-            message=message['text'].replace('\n', ''),
-          )
-        # no username, display only text
-        else:
-          subtitle += '{message}\n'.format(
-            message=message['text'].replace('\n', ''),
-          )
-      self.subtitle = subtitle
+      self.subtitle = get_slack_messages()
     except Exception:
       self.subtitle = ' > Une erreur est survenue pendant la teletransmission'
 
@@ -136,20 +109,6 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     curses.endwin()
     os.system('clear')
 
-  def post_slack_message(self, text, username='Minitel'):
-    requests.post(
-      url="https://slack.com/api/chat.postMessage",
-      params = {
-        "token":SLACK_TOKEN,
-      },
-      data = {
-        "username":username,
-        "icon_url":"http://mazaheri.s3.amazonaws.com/minitel.png",
-        "channel":SLACK_CHANNEL,
-        "text":text,
-      },
-    )
-
   def get_slack_messages(self):
     return '[Aucun message]'
 
@@ -172,7 +131,7 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
 
       # send Slack message
       if field == 'Message':
-        self.post_slack_message(
+        post_slack_message(
           text=self.leavemessage_dict.get('Message') or '[Pas de message]',
           username='{0} via Minitel'.format(self.leavemessage_dict.get('Nom') or 'Anonyme'),
         )

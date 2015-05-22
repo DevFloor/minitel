@@ -12,18 +12,6 @@ class MinitelBaseScreen(object):
   def __str__(self):
     return '{0}<title:{1}>'.format(self.__class__.__name__, self.title)
 
-  def fetch(self, minitel):
-    '''
-    Preloads screen data.
-    '''
-    pass
-
-  def pre_fetch(self, minitel):
-    '''
-    Called before fetch.
-    '''
-    pass
-
   def run(self, minitel, parent):
     '''
     Runs the screen.
@@ -51,6 +39,12 @@ class MinitelMenuScreen(MinitelBaseScreen):
     self.submenus = submenus
     self.show_logo = show_logo
 
+  def prepare_display(self, minitel):
+    '''
+    Called before display.
+    '''
+    pass
+
   def run(self, minitel, parent):
     '''
     This function displays the appropriate menu and returns the option selected.
@@ -69,12 +63,8 @@ class MinitelMenuScreen(MinitelBaseScreen):
     # how many options in this menu
     optioncount = len(self.submenus)
 
-    # pre fetch hook
-    self.pre_fetch(minitel=minitel)
-
-    # fetch menu
-    # will allow the menu to preload data if needed
-    self.fetch(minitel=minitel)
+    # prepare display hook
+    self.prepare_display(minitel=minitel)
 
     # pos is the zero-based index of the hightlighted menu option
     pos=0

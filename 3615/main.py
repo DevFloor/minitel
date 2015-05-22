@@ -57,13 +57,14 @@ class MinitelGetSlackMessagesScreen(MinitelMenuScreen):
   A screen to show Slack Messages.
   '''
 
-  def pre_fetch(self, minitel):
+  def prepare_display(self, minitel):
+    # show loading message
     minitel.show_quick_message(
       title=self.title,
       message='Chargement des messages...'
     )
 
-  def fetch(self, minitel):
+    # load
     try:
       self.subtitle = get_slack_messages()
     except Exception:

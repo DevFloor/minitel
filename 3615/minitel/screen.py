@@ -32,12 +32,11 @@ class MinitelMenuScreen(MinitelBaseScreen):
   A screen to display a menu.
   '''
 
-  def __init__(self, title, subtitle=None, show_logo=False, submenus=[]):
+  def __init__(self, title, subtitle=None, submenus=[]):
     assert(title is not None)
     self.title = title
     self.subtitle = subtitle
     self.submenus = submenus
-    self.show_logo = show_logo
 
   def prepare_display(self, minitel):
     '''
@@ -49,10 +48,6 @@ class MinitelMenuScreen(MinitelBaseScreen):
     '''
     This function displays the appropriate menu and returns the option selected.
     '''
-
-    # show logo if necessary
-    if self.show_logo:
-      minitel.show_logo()
 
     # work out what text to display as the last menu option
     if parent is None:
@@ -157,7 +152,6 @@ class MinitelFormInputScreen(MinitelBaseScreen):
 
   def __init__(self, title):
     self.title = title
-    self.show_logo = False
 
   def run(self, minitel, parent):
     assert(isinstance(parent, MinitelFormMenuScreen))

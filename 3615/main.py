@@ -13,6 +13,28 @@ from utils.slack import get_slack_messages, post_slack_message
 # Custom Screens
 #
 
+class MinitelHomeMenuScreen(MinitelMenuScreen):
+
+  def show_logo(self, minitel):
+    # get logo
+    with open('logo.txt', 'r') as f:
+      logo = f.read()
+
+    # display logo
+    minitel.screen.border(0)
+    minitel.write(2, 2, logo)
+    minitel.screen.refresh()
+
+    # wait for user input
+    minitel.screen.getch()
+
+    # clear
+    minitel.screen.clear()
+
+  def prepare_display(self, minitel):
+    # display NUMA logo before
+    self.show_logo(minitel)
+
 class MinitelLeaveMessageFormMenuScreen(MinitelFormMenuScreen):
   '''
   A form screen to leave messages.
@@ -102,10 +124,9 @@ de Paris. Nous fournissons aux residents tout le necessaire pour travailler
 et recevoir leurs partenaires et clients dans les meilleures conditions.''',
 )
 
-menu_root = MinitelMenuScreen(
+menu_root = MinitelHomeMenuScreen(
   title="Livre d'Or de l'apero DevFloor",
   subtitle="Tapez le chiffre + Entree",
-  show_logo=True,
   submenus=[
     menu_leave_message,
     menu_get_messages,

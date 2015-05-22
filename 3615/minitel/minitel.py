@@ -78,23 +78,6 @@ class Minitel(object):
     # clear
     self.screen.clear()
 
-  def show_logo(self):
-
-    # get logo
-    with open('logo.txt', 'r') as f:
-      logo = f.read()
-
-    # display logo
-    self.screen.border(0)
-    self.write(2, 2, logo)
-    self.screen.refresh()
-
-    # wait for user input
-    self.screen.getch()
-
-    # clear
-    self.screen.clear()
-
   def runmenu(self, menu, parent=None):
     '''
     This function calls showmenu and then acts on the selected item.

@@ -39,18 +39,24 @@ class MinitelLeaveMessageFormMenuScreen(MinitelFormMenuScreen):
       f.write('==============\n')
 
     # send Slack message
-    if field == 'Message':
+    try:
       post_slack_message(
         text=self.form_values.get('Message') or '[Pas de message]',
         username='{0} via Minitel'.format(self.form_values.get('Nom') or 'Anonyme'),
       )
-
-    # show quick message
-    minitel.show_quick_message(
-      title=self.title,
-      message=' > Message teletransmit avec succes !',
-      time=2,
-    )
+    except Exception:
+      minitel.show_quick_message(
+        title=self.title,
+        message=' > Une erreur est survenue pendant la teletransmission',
+        time=2,
+      )
+    else:
+      # show quick message
+      minitel.show_quick_message(
+        title=self.title,
+        message=' > Message teletransmit avec succes !',
+        time=2,
+      )
 
 class MinitelGetSlackMessagesScreen(MinitelMenuScreen):
   '''

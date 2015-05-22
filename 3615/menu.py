@@ -6,24 +6,39 @@ import curses, os
 
 from slack import get_slack_messages, post_slack_message
 
-class MinitelAbstractScreen(object):
-  def __init__(self):
-    raise StandardError('MinitelAbstractScreen is abstract')
+class MinitelBaseScreen(object):
+
+  def __init__(self, title):
+    assert(title is not None)
+    self.title = title
 
   def __str__(self):
     return '{0}<title:{1}>'.format(self.__class__.__name__, self.title)
+
   def fetch(self, minitel):
     '''
     Preloads screen data.
     '''
     pass
+
   def pre_fetch(self, minitel):
     '''
     Called before fetch.
     '''
     pass
 
-class MinitelMenuScreen(MinitelAbstractScreen):
+  def run(self, minitel, parent):
+    '''
+    Runs the screen.
+    '''
+    raise StandardError('MinitelBaseScreen is abstract')
+
+class MinitelExitScreen(MinitelBaseScreen):
+  def run(self, minitel, parent):
+    # return None to exit
+    return None
+
+class MinitelMenuScreen(MinitelBaseScreen):
   '''
   A screen to display a menu.
   '''
@@ -35,14 +50,178 @@ class MinitelMenuScreen(MinitelAbstractScreen):
     self.submenus = submenus
     self.show_logo = show_logo
 
-class MinitelFormInputScreen(MinitelAbstractScreen):
+  def run(self, minitel, parent):
+    '''
+    This function displays the appropriate menu and returns the option selected.
+    '''
+
+    # show logo if necessary
+    if self.show_logo:
+      minitel.show_logo()
+
+    # work out what text to display as the last menu option
+    if parent is None:
+      lastoption = "Quitter 3615 NUMA"
+    else:
+      lastoption = "Revenir au menu {0}".format(parent.title)
+
+    # how many options in this menu
+    optioncount = len(self.submenus)
+
+    # pre fetch hook
+    self.pre_fetch(minitel=minitel)
+
+    # fetch menu
+    # will allow the menu to preload data if needed
+    self.fetch(minitel=minitel)
+
+    # pos is the zero-based index of the hightlighted menu option
+    pos=0
+    # used to prevent the screen being redrawn every time
+    oldpos=None
+    # control for while loop, let's you scroll through options until return key
+    # is pressed then returns pos to program
+    x = None
+
+    # Loop until return key is pressed
+    while x != ord('\n'):
+      if pos != oldpos:
+        oldpos = pos
+        minitel.screen.border(0)
+
+        line = 2
+        line = minitel.write(line, 2, self.title, pspace=1, style=curses.A_STANDOUT)
+        line = minitel.write(line, 2, self.subtitle, pspace=1, style=curses.A_BOLD)
+
+        # display menu items, showing the 'pos' item highlighted
+        for index in range(optioncount):
+          line = minitel.write(line, 4, "%d - %s" % (index+1, self.submenus[index].title), style=(curses.A_STANDOUT if pos == index else curses.A_NORMAL))
+
+        # display exit
+        line = minitel.write(line, 4, "%d - %s" % (optioncount+1, lastoption), style=(curses.A_STANDOUT if pos == optioncount else curses.A_NORMAL))
+
+        # refresh
+        minitel.screen.refresh()
+
+      # Gets user input
+      x = minitel.screen.getch(line, 4)
+
+      # What is user input?
+      if x >= ord('1') and x <= ord(str(optioncount+1)):
+        # convert keypress back to a number, then subtract 1 to get index
+        pos = x - ord('0') - 1
+      elif x == 258: # down arrow
+        if pos < optioncount:
+          pos += 1
+        else:
+          curses.beep()
+      elif x == 259: # up arrow
+        if pos > 0:
+          pos -= 1
+        else:
+          curses.beep()
+      elif x != ord('\n'):
+        curses.beep()
+
+    # clear
+    minitel.screen.clear()
+
+    # select the new menu
+    if pos == optioncount:
+      return None
+    return self.submenus[pos]
+
+class MinitelFormMenuScreen(MinitelMenuScreen):
+  '''
+  A screen to prompt the user to fill a form.
+  '''
+
+  def __init__(self, *args, **kwargs):
+    super(MinitelFormMenuScreen, self).__init__(*args, **kwargs)
+    self.form_values = {}
+
+  def submit(self, minitel):
+    '''
+    Submits the form.
+    '''
+    pass
+
+class MinitelLeaveMessageFormMenuScreen(MinitelFormMenuScreen):
+  def submit(self, minitel):
+    '''
+    Leaves a messages.
+    '''
+
+    # show quick message
+    minitel.show_quick_message(
+      title=self.title,
+      message='Envoi du message...'
+    )
+
+    # write to file
+    with open("livredor.txt", "a") as f:
+      for field in ['Nom', 'Email', 'Message']:
+        f.write('{field} : {userinput}\n'.format(
+          field=field,
+          userinput=self.form_values.get(field) or '[Pas de {0}]'.format(field),
+        ))
+      f.write('==============\n')
+
+    # send Slack message
+    if field == 'Message':
+      post_slack_message(
+        text=self.form_values.get('Message') or '[Pas de message]',
+        username='{0} via Minitel'.format(self.form_values.get('Nom') or 'Anonyme'),
+      )
+
+    # show quick message
+    minitel.show_quick_message(
+      title=self.title,
+      message=' > Message teletransmit avec succes !',
+      time=2,
+    )
+
+class MinitelFormSubmitScreen(MinitelBaseScreen):
+  '''
+  A screen to submit a form.
+  Parent must be a MinitelFormMenuScreen.
+  '''
+
+  def run(self, minitel, parent):
+    assert(isinstance(parent, MinitelFormMenuScreen))
+
+    # call submit() to submit the form
+    parent.submit(minitel)
+
+class MinitelFormInputScreen(MinitelBaseScreen):
   '''
   A screen to prompt the user for a form input.
+  Parent must be a MinitelFormMenuScreen.
   '''
 
   def __init__(self, title):
     self.title = title
     self.show_logo = False
+
+  def run(self, minitel, parent):
+    assert(isinstance(parent, MinitelFormMenuScreen))
+
+    minitel.screen.border(0)
+
+    line = 2
+    line = minitel.write(line, 2, parent.title, pspace=1, style=curses.A_STANDOUT)
+    line = minitel.write(line,2, "Entrez votre {0}: ".format(self.title))
+
+    minitel.screen.refresh()
+
+    # get user input
+    userinput = minitel.get_user_input(line, 2)
+
+    # keep data in leavemessage_dict
+    parent.form_values[self.title] = userinput
+
+    # clear
+    minitel.screen.clear()
 
 class MinitelGetSlackMessagesScreen(MinitelMenuScreen):
   '''
@@ -63,11 +242,6 @@ class MinitelGetSlackMessagesScreen(MinitelMenuScreen):
 
 class Minitel(object):
 
-  SERVTELEMATIQUE = "Envoyer sur le serveur telematique de Numa"
-  HISTORY_MESSAGE = '''Le DevFloor est situe dans un quartier central et anime en plein coeur
-de Paris. Nous fournissons aux residents tout le necessaire pour travailler
-et recevoir leurs partenaires et clients dans les meilleures conditions.'''
-
   def __init__(self):
     super(Minitel, self).__init__()
 
@@ -75,14 +249,14 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     self.leavemessage_dict = {}
 
   def run_root_menu(self):
-    menu_leave_message = MinitelMenuScreen(
+    menu_leave_message = MinitelLeaveMessageFormMenuScreen(
       title='Laisser un message',
       subtitle='Tapez le chiffre + Entree',
       submenus=[
         MinitelFormInputScreen('Nom'),
         MinitelFormInputScreen('Email'),
         MinitelFormInputScreen('Message'),
-        MinitelFormInputScreen(Minitel.SERVTELEMATIQUE),
+        MinitelFormSubmitScreen('Envoyer sur le serveur telematique de Numa'),
       ]
     )
     menu_get_messages = MinitelGetSlackMessagesScreen(
@@ -90,7 +264,9 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     )
     menu_history = MinitelMenuScreen(
       title="L'histoire du DevFloor",
-      subtitle=Minitel.HISTORY_MESSAGE,
+      subtitle='''Le DevFloor est situe dans un quartier central et anime en plein coeur
+de Paris. Nous fournissons aux residents tout le necessaire pour travailler
+et recevoir leurs partenaires et clients dans les meilleures conditions.''',
     )
     menu_root = MinitelMenuScreen(
       title="Livre d'Or de l'apero DevFloor",
@@ -127,65 +303,12 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     self.screen.keypad(1)
 
     # run menu
-    self.processmenu(menu_root)
+    self.runmenu(menu_root)
 
     # Important!
     # This closes out the menu system and returns you to the bash prompt.
     curses.endwin()
     os.system('clear')
-
-  def leavemessage(self, menu, field):
-
-    # send message
-    if field == Minitel.SERVTELEMATIQUE:
-
-      # show quick message
-      minitel.show_quick_message(
-        title=menu.title,
-        message='Envoi du message...'
-      )
-
-      # write to file
-      with open("livredor.txt", "a") as f:
-        for field in ['Nom', 'Email', 'Message']:
-          f.write('{field} : {userinput}\n'.format(
-            field=field,
-            userinput=self.leavemessage_dict.get(field) or '[Pas de {0}]'.format(field),
-          ))
-        f.write('==============\n')
-
-      # send Slack message
-      if field == 'Message':
-        post_slack_message(
-          text=self.leavemessage_dict.get('Message') or '[Pas de message]',
-          username='{0} via Minitel'.format(self.leavemessage_dict.get('Nom') or 'Anonyme'),
-        )
-
-      # show quick message
-      self.show_quick_message(
-        title=menu.title,
-        message=' > Message teletransmit avec succes !',
-        time=2,
-      )
-
-    # get field value
-    else:
-      self.screen.border(0)
-
-      line = 2
-      line = self.write(line, 2, menu.title, pspace=1, style=curses.A_STANDOUT)
-      line = self.write(line,2, "Entrez votre {0}: ".format(field))
-
-      self.screen.refresh()
-
-      # get user input
-      userinput = self.get_user_input(line, 2)
-
-      # keep data in leavemessage_dict
-      self.leavemessage_dict[field] = userinput
-
-      # clear
-      self.screen.clear()
 
   def write(self, line, column, text, pspace=0, style=curses.A_NORMAL):
     '''
@@ -230,87 +353,6 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     # clear
     self.screen.clear()
 
-  def runmenu(self, menu, parent):
-    '''
-    This function displays the appropriate menu and returns the option selected.
-    '''
-
-    # show logo if necessary
-    if menu.show_logo:
-      self.show_logo()
-
-    # work out what text to display as the last menu option
-    if parent is None:
-      lastoption = "Quitter 3615 NUMA"
-    else:
-      lastoption = "Revenir au menu {0}".format(parent.title)
-
-    # how many options in this menu
-    optioncount = len(menu.submenus)
-
-    # pre fetch hook
-    menu.pre_fetch(minitel=self)
-
-    # fetch menu
-    # will allow the menu to preload data if needed
-    menu.fetch(minitel=self)
-
-    # pos is the zero-based index of the hightlighted menu option. Every time
-    # runmenu is called, position returns to 0, when runmenu ends the position
-    # is returned and tells the program what opt$
-    pos=0
-    # used to prevent the screen being redrawn every time
-    oldpos=None
-    # control for while loop, let's you scroll through options until return key
-    # is pressed then returns pos to program
-    x = None
-
-    # Loop until return key is pressed
-    while x != ord('\n'):
-      if pos != oldpos:
-        oldpos = pos
-        self.screen.border(0)
-
-        line = 2
-        line = self.write(line, 2, menu.title, pspace=1, style=curses.A_STANDOUT)
-        line = self.write(line, 2, menu.subtitle, pspace=1, style=curses.A_BOLD)
-
-        # display menu items, showing the 'pos' item highlighted
-        for index in range(optioncount):
-          line = self.write(line, 4, "%d - %s" % (index+1, menu.submenus[index].title), style=(curses.A_STANDOUT if pos == index else curses.A_NORMAL))
-
-        # display exit
-        line = self.write(line, 4, "%d - %s" % (optioncount+1, lastoption), style=(curses.A_STANDOUT if pos == optioncount else curses.A_NORMAL))
-
-        # refresh
-        self.screen.refresh()
-
-      # Gets user input
-      x = self.screen.getch(line, 4)
-
-      # What is user input?
-      if x >= ord('1') and x <= ord(str(optioncount+1)):
-        # convert keypress back to a number, then subtract 1 to get index
-        pos = x - ord('0') - 1
-      elif x == 258: # down arrow
-        if pos < optioncount:
-          pos += 1
-        else:
-          curses.beep()
-      elif x == 259: # up arrow
-        if pos > 0:
-          pos -= 1
-        else:
-          curses.beep()
-      elif x != ord('\n'):
-        curses.beep()
-
-    # clear
-    self.screen.clear()
-
-    # return index of the selected item
-    return pos
-
   def show_logo(self):
 
     # get logo
@@ -328,23 +370,24 @@ et recevoir leurs partenaires et clients dans les meilleures conditions.'''
     # clear
     self.screen.clear()
 
-  def processmenu(self, menu, parent=None):
+  def runmenu(self, menu, parent=None):
     '''
     This function calls showmenu and then acts on the selected item.
     '''
 
-    #Loop until the user exits the menu
-    exitmenu = False
-    while not exitmenu:
-      getin = self.runmenu(menu, parent)
-      if getin == len(menu.submenus):
-        exitmenu = True
-      elif isinstance(menu.submenus[getin], MinitelFormInputScreen):
-        self.leavemessage(menu, field=menu.submenus[getin].title)
-      elif isinstance(menu.submenus[getin], MinitelMenuScreen):
-        self.processmenu(menu.submenus[getin], menu)
-      elif isinstance(menu.submenus[getin], MinitelExitScreen):
-        exitmenu = True
+    # loop until the user exits the menu
+    while True:
+      new_menu = menu.run(
+        minitel=self,
+        parent=parent,
+      )
+
+      # if new_menu is None, exit
+      if new_menu is None:
+        break
+
+      # run child
+      self.runmenu(menu=new_menu, parent=menu)
 
 # Main program
 if __name__ == '__main__':
